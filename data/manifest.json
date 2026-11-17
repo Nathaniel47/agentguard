@@ -1,0 +1,47 @@
+{
+  "seed": 42,
+  "dev_fraction": 0.3,
+  "n_cases": 220,
+  "n_benign": 40,
+  "sources": {
+    "injecagent": {
+      "name": "InjecAgent (attacker cases)",
+      "url": "https://github.com/uiuc-kang-lab/InjecAgent",
+      "commit": "f19c9f2c79a41046eb13c03c51a24c567a8ffa07",
+      "licence": "MIT",
+      "use": "attacker instruction wording only (62 instructions)"
+    },
+    "deepset": {
+      "name": "deepset/prompt-injections",
+      "url": "https://huggingface.co/datasets/deepset/prompt-injections",
+      "commit": "4f61ecb038e9c3fb77e21034b22511b523772cdd",
+      "licence": "Apache-2.0",
+      "use": "English injection prompts only (label 1)"
+    }
+  },
+  "raw_sha256": {
+    "attacker_cases_dh.jsonl": "999d52e15af3c80a3303a09430af0f3878d1f91e4c573ca7b477a91cdfa6b991",
+    "attacker_cases_ds.jsonl": "87952398c989d8ca841724e38ecdbb789676d3841e19dfc44aac7b710df9cb1f",
+    "deepset_train.parquet": "2e10bc7ab30f542c97e4e83e2a5683000b5057d25ec10908784c631d44124c04",
+    "deepset_test.parquet": "39ac797cabc157eeed58435a08593b2952bb6cb16fc394a2d383f447cc7b246e"
+  },
+  "public_stats": {
+    "deepset": {
+      "label1_total": 263,
+      "kept": 154,
+      "dropped": 109
+    },
+    "injecagent": {
+      "dh": {
+        "rows": 30,
+        "kept": 30
+      },
+      "ds": {
+        "rows": 32,
+        "kept": 32
+      }
+    },
+    "deepset_roleplay_pool": 13,
+    "deepset_plain_pool": 141
+  }
+}

@@ -3,3 +3,6 @@
 pytest>=8.0
 ruff>=0.5
 pre-commit>=3.7
+# dataset build (reads parquet)
+pandas>=2.0
+pyarrow>=15

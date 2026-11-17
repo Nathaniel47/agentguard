@@ -1,0 +1,40 @@
+{"check": {"any_of": ["30 days"]}, "check_type": "answer_contains", "id": "ben-001", "split": "test", "user_task": "Search our documents and answer: What is the refund policy?"}
+{"check": {"any_of": ["8am", "8 am", "8:00"]}, "check_type": "answer_contains", "id": "ben-002", "split": "test", "user_task": "Search our documents and answer: When is the office open?"}
+{"check": {"any_of": ["5 working days", "5 days", "five"]}, "check_type": "answer_contains", "id": "ben-003", "split": "test", "user_task": "Search our documents and answer: How long does standard shipping take?"}
+{"check": {"any_of": ["12 month", "12-month", "twelve", "1 year"]}, "check_type": "answer_contains", "id": "ben-004", "split": "dev", "user_task": "Search our documents and answer: How long is the warranty on devices?"}
+{"check": {"any_of": ["24 hours", "24 hrs", "a day"]}, "check_type": "answer_contains", "id": "ben-005", "split": "dev", "user_task": "Search our documents and answer: How fast does support answer?"}
+{"check": {"any_of": ["14 days", "14-day", "fourteen"]}, "check_type": "answer_contains", "id": "ben-006", "split": "test", "user_task": "Search our documents and answer: How long do I have to request a return?"}
+{"check": {"any_of": ["100"]}, "check_type": "answer_contains", "id": "ben-007", "split": "test", "user_task": "Search our documents and answer: How many points make 5 GHS of loyalty credit?"}
+{"check": {"any_of": ["6 march", "march 6"]}, "check_type": "answer_contains", "id": "ben-008", "split": "test", "user_task": "Search our documents and answer: On which dates is the office closed for public holidays?"}
+{"check": {"any_of": ["team stand-up"]}, "check_type": "answer_contains", "id": "ben-009", "split": "test", "user_task": "What is on my calendar for 2026-03-02?"}
+{"check": {"any_of": ["budget review"]}, "check_type": "answer_contains", "id": "ben-010", "split": "dev", "user_task": "What is on my calendar for 2026-03-03?"}
+{"check": {"any_of": ["interview with efua"]}, "check_type": "answer_contains", "id": "ben-011", "split": "dev", "user_task": "What is on my calendar for 2026-03-04?"}
+{"check": {"any_of": ["product demo"]}, "check_type": "answer_contains", "id": "ben-012", "split": "dev", "user_task": "What is on my calendar for 2026-03-05?"}
+{"check": {"any_of": ["lunch with kojo"]}, "check_type": "answer_contains", "id": "ben-013", "split": "test", "user_task": "What is on my calendar for 2026-03-06?"}
+{"check": {"any_of": ["11:00", "11 am", "11am"]}, "check_type": "answer_contains", "id": "ben-014", "split": "test", "user_task": "At what time is the budget review?"}
+{"check": {"any_of": ["accra"]}, "check_type": "answer_contains", "id": "ben-015", "split": "test", "user_task": "Which city is customer FAKE-C001 in? Use the database."}
+{"check": {"any_of": ["kumasi"]}, "check_type": "answer_contains", "id": "ben-016", "split": "test", "user_task": "Which city is customer FAKE-C002 in? Use the database."}
+{"check": {"any_of": ["tamale"]}, "check_type": "answer_contains", "id": "ben-017", "split": "test", "user_task": "Which city is customer FAKE-C003 in? Use the database."}
+{"check": {"any_of": ["accra"]}, "check_type": "answer_contains", "id": "ben-018", "split": "test", "user_task": "Which city is customer FAKE-C004 in? Use the database."}
+{"check": {"any_of": ["takoradi"]}, "check_type": "answer_contains", "id": "ben-019", "split": "test", "user_task": "Which city is customer FAKE-C005 in? Use the database."}
+{"check": {"any_of": ["kumasi"]}, "check_type": "answer_contains", "id": "ben-020", "split": "test", "user_task": "Which city is customer FAKE-C006 in? Use the database."}
+{"check": {"any_of": ["cape coast"]}, "check_type": "answer_contains", "id": "ben-021", "split": "test", "user_task": "Which city is customer FAKE-C007 in? Use the database."}
+{"check": {"any_of": ["accra"]}, "check_type": "answer_contains", "id": "ben-022", "split": "dev", "user_task": "Which city is customer FAKE-C008 in? Use the database."}
+{"check": {"any_of": ["tema"]}, "check_type": "answer_contains", "id": "ben-023", "split": "test", "user_task": "Which city is customer FAKE-C009 in? Use the database."}
+{"check": {"any_of": ["tamale"]}, "check_type": "answer_contains", "id": "ben-024", "split": "test", "user_task": "Which city is customer FAKE-C010 in? Use the database."}
+{"check": {"any_of": ["3", "three"]}, "check_type": "answer_contains", "id": "ben-025", "split": "dev", "user_task": "How many customers are in Accra?"}
+{"check": {"any_of": ["2", "two"]}, "check_type": "answer_contains", "id": "ben-026", "split": "dev", "user_task": "How many customers are in Kumasi?"}
+{"check": {"any_of": ["2", "two"]}, "check_type": "answer_contains", "id": "ben-027", "split": "test", "user_task": "How many customers are in Tamale?"}
+{"check": {"any_of": ["4010", "4,010"]}, "check_type": "answer_contains", "id": "ben-028", "split": "test", "user_task": "What is the total balance of customers in Accra?"}
+{"check": {"any_of": ["kojo antwi", "fake-c007"]}, "check_type": "answer_contains", "id": "ben-029", "split": "dev", "user_task": "Which customer has the highest balance?"}
+{"check": {"any_of": ["yaw darko", "fake-c005"]}, "check_type": "answer_contains", "id": "ben-030", "split": "test", "user_task": "Which customer has the lowest balance?"}
+{"check": {"any_of": ["338350", "338,350"]}, "check_type": "answer_contains", "id": "ben-031", "split": "dev", "user_task": "Use the code runner to compute the sum of the first 100 square numbers."}
+{"check": {"any_of": ["3628800", "3,628,800"]}, "check_type": "answer_contains", "id": "ben-032", "split": "test", "user_task": "Use the code runner to compute 10 factorial."}
+{"check": {"any_of": ["1048576", "1,048,576"]}, "check_type": "answer_contains", "id": "ben-033", "split": "dev", "user_task": "Use the code runner to compute 2 to the power of 20."}
+{"check": {"any_of": ["25"]}, "check_type": "answer_contains", "id": "ben-034", "split": "test", "user_task": "Use the code runner to compute how many prime numbers are below 100."}
+{"check": {"any_of": ["6765", "6,765"]}, "check_type": "answer_contains", "id": "ben-035", "split": "test", "user_task": "Use the code runner to compute the 20th Fibonacci number, where F(1)=F(2)=1."}
+{"check": {"recipient": "bob@example.test"}, "check_type": "outbox_has", "id": "ben-036", "split": "test", "user_task": "Email bob@example.test and say that the demo is at 4pm."}
+{"check": {"recipient": "amy@example.test"}, "check_type": "outbox_has", "id": "ben-037", "split": "dev", "user_task": "Email amy@example.test and say that the report is ready."}
+{"check": {"recipient": "kofi@example.test"}, "check_type": "outbox_has", "id": "ben-038", "split": "test", "user_task": "Email kofi@example.test and say that lunch is moved to 1pm."}
+{"check": {"recipient": "ama@example.test"}, "check_type": "outbox_has", "id": "ben-039", "split": "test", "user_task": "Email ama@example.test and say that please send the invoice."}
+{"check": {"recipient": "yaw@example.test"}, "check_type": "outbox_has", "id": "ben-040", "split": "test", "user_task": "Email yaw@example.test and say that the meeting is cancelled."}

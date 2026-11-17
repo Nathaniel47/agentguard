@@ -42,4 +42,14 @@ All attacks target this app only. Email is a mock outbox, the code runner is san
 
 ## Datasets and licences
 
-Public test sets are chosen and their licences recorded in Step 3.
+Only the attacker's wording from public sets is reused; every goal, success marker and target tool is our own. Versions are pinned by commit and file hashes are in `data/manifest.json`.
+
+| Source | Licence | Pinned version | What is used |
+|---|---|---|---|
+| [InjecAgent](https://github.com/uiuc-kang-lab/InjecAgent) (attacker cases) | MIT | `f19c9f2c` | 62 attacker instructions, reworded into 35 cases |
+| [deepset/prompt-injections](https://huggingface.co/datasets/deepset/prompt-injections) | Apache-2.0 | `4f61ecb0` | English injection prompts, 30 cases |
+| Self-written | this repo | n/a | 155 attack cases and 40 benign tasks |
+
+Considered and not used: JailbreakBench and AgentDojo (both MIT). Their cases are mostly harmful-content requests or need their own task suites, which do not fit automatic state-based scoring here.
+
+Rebuild the data: `python -m agentguard.harness.build_dataset` (downloads the pinned files into `data/raw/`, which is git-ignored). Outputs: `data/cases.jsonl` (220 cases), `data/benign.jsonl` (40 tasks), `data/manifest.json`, `results/data_report.md`.

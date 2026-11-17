@@ -4,7 +4,7 @@
 
 - [x] Step 1 Kickoff and plan (PLAN.md)
 - [x] Step 2 Repo setup
-- [ ] Step 3 Data pipeline
+- [x] Step 3 Data pipeline
 - [ ] Step 4 Core feature: agent with tools
 - [ ] Step 5 Remaining features: memory, harness, trace viewer, leaderboard
 - [ ] Step 6 Evaluation
