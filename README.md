@@ -2,7 +2,7 @@
 
 A small LLM agent with five tools and long-term memory, wrapped in five separate guardrails, plus an automated red-team harness that attacks it with 220 cases and measures which guardrail stops which attack, with no LLM judge.
 
-**Demo:** `https://YOUR_NAME-agentguard-arena.hf.space` (placeholder until deployed; follow [DEPLOY.md](DEPLOY.md)). Try to trick the agent past the guardrails in one click, then read the step-by-step trace of what it did.
+**Demo:** https://agentguard-9q9m.onrender.com (free instance: the first visit after a quiet spell takes up to a minute to wake). Try to trick the agent past the guardrails in one click, then read the step-by-step trace of what it did.
 
 <!-- GIF placeholder: record the arena (click an example, open "See what the assistant did"), save as docs/demo.gif, then replace this line with ![Arena demo](docs/demo.gif) -->
 
@@ -90,7 +90,7 @@ uvicorn api.main:app --reload --port 7860
 
 Then open http://localhost:7860. With no keys, the arena runs against the offline scripted agent (a worst case that obeys every instruction it reads). Set `AGENTGUARD_ARENA_BACKEND=groq` and `AGENTGUARD_GROQ_API_KEY` in `.env` to use the real model.
 
-Docker, locked down like production: `docker compose up --build`. To deploy a public copy on Hugging Face Spaces, follow [DEPLOY.md](DEPLOY.md).
+Docker, locked down like production: `docker compose up --build`. To deploy a public copy on Render's free tier, follow [DEPLOY.md](DEPLOY.md).
 
 Lint and format: `ruff check .` and `ruff format .`. Optional commit hooks (gitleaks secret scan, ruff): `pre-commit install`.
 
