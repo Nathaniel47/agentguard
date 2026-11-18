@@ -25,6 +25,15 @@ class RunResult:
     tool_calls: list[dict] = field(default_factory=list)
 
 
+def _from_function_call(obj: dict) -> dict | None:
+    """Models trained on function calling often answer {"name": ..., "arguments": {...}}."""
+    args = obj.get("arguments")
+    if isinstance(obj.get("name"), str) and isinstance(args, dict):
+        if not {"tool", "final", "remember"} & args.keys():
+            return {"tool": obj["name"].split(".")[-1], "args": args}
+    return None
+
+
 def parse_action(text: str) -> dict | None:
     """Find the first JSON object in the reply. Models sometimes wrap it in prose or fences."""
     start = text.find("{")
@@ -37,8 +46,11 @@ def parse_action(text: str) -> dict | None:
                     obj = json.loads(text[start : end + 1])
                 except json.JSONDecodeError:
                     break
-                if isinstance(obj, dict) and ("tool" in obj or "final" in obj or "remember" in obj):
-                    return obj
+                if isinstance(obj, dict):
+                    if {"tool", "final", "remember"} & obj.keys():
+                        return obj
+                    if action := _from_function_call(obj):
+                        return action
                 break
         start = text.find("{", start + 1)
     return None
@@ -58,6 +70,14 @@ class Agent:
         self.guardrails = guardrails or []
         self.system = system_prompt(tools)
 
+    @staticmethod
+    def _safe(check, *args) -> Decision:
+        """A guardrail that crashes must not let the action through: treat it as a block."""
+        try:
+            return check(*args)
+        except Exception as exc:  # noqa: BLE001
+            return Decision(BLOCK, f"guardrail error ({type(exc).__name__}); failing closed")
+
     def _for(self, hook: str) -> list[Guardrail]:
         """Guardrails that implement this hook; the others are not recorded as having looked."""
         return [g for g in self.guardrails if g.handles(hook)]
@@ -73,7 +93,7 @@ class Agent:
         state = RunState(user_task)
         trace.add("input", "user_task", text=user_task)
         for g in self._for("input"):
-            d = self._decide(trace, "input", g.name, g.check_input(user_task))
+            d = self._decide(trace, "input", g.name, self._safe(g.check_input, user_task))
             if d.action == BLOCK:
                 return RunResult(REFUSAL, "blocked_input", 0, trace)
 
@@ -117,7 +137,7 @@ class Agent:
             log.append((json.dumps(action, ensure_ascii=False), obs))
 
         for g in self._for("output"):
-            d = self._decide(trace, "output", g.name, g.check_output(answer))
+            d = self._decide(trace, "output", g.name, self._safe(g.check_output, answer))
             if d.action == BLOCK:
                 answer, status = d.replacement or REFUSAL, "bad_output"
             elif d.replacement is not None:
@@ -129,7 +149,9 @@ class Agent:
         if self.memory is None:
             return "Memory is not available."
         for g in self._for("memory_write"):
-            d = self._decide(trace, "memory_write", g.name, g.check_memory_write(text, state))
+            d = self._decide(
+                trace, "memory_write", g.name, self._safe(g.check_memory_write, text, state)
+            )
             if d.action == BLOCK:
                 trace.add("memory", "write_blocked", text=text[:300])
                 return f"Memory write blocked by policy: {d.reason}"
@@ -145,7 +167,11 @@ class Agent:
             return f"Unknown tool or bad arguments. Tools: {', '.join(self.tools)}"
         for g in self._for("tool_call"):
             d = self._decide(
-                trace, "tool_call", g.name, g.check_tool_call(tool, args, state), tool=name
+                trace,
+                "tool_call",
+                g.name,
+                self._safe(g.check_tool_call, tool, args, state),
+                tool=name,
             )
             if d.action == BLOCK:
                 trace.add("tool", name, args=args, blocked=True)
@@ -158,7 +184,11 @@ class Agent:
         text = result.text
         for g in self._for("tool_result"):
             d = self._decide(
-                trace, "tool_result", g.name, g.check_tool_result(tool, result, state), tool=name
+                trace,
+                "tool_result",
+                g.name,
+                self._safe(g.check_tool_result, tool, result, state),
+                tool=name,
             )
             if d.action == BLOCK:
                 text = f"Result withheld by policy: {d.reason}"

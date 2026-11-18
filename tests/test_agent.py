@@ -125,3 +125,17 @@ def test_every_case_can_be_planted_and_run(env):
             assert result.status in ("answered", "step_limit")
         finally:
             e.close()
+
+
+def test_parse_action_accepts_function_call_style_replies():
+    assert parse_action('{"name": "search", "arguments": {"query": "x"}}') == {
+        "tool": "search",
+        "args": {"query": "x"},
+    }
+    assert parse_action('{"name": "functions.email", "arguments": {"action": "read_inbox"}}') == {
+        "tool": "email",
+        "args": {"action": "read_inbox"},
+    }
+    wrapped = '{"name": "assistant.json", "arguments": {"final": "hi"}}'
+    assert parse_action(wrapped) == {"final": "hi"}
+    assert parse_action('{"name": "search"}') is None

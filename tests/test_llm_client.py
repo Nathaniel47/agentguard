@@ -53,3 +53,12 @@ def test_recover_failed_generation_keeps_the_action_json():
         body = {"error": {"code": "other"}}
 
     assert recover_failed_generation(Other()) == ""
+
+
+def test_recover_failed_generation_also_handles_parse_failures():
+    from agentguard.llm.groq import recover_failed_generation
+
+    class Err(Exception):
+        body = {"error": {"code": "output_parse_failed", "failed_generation": "Need to read it."}}
+
+    assert recover_failed_generation(Err()) == "Need to read it."

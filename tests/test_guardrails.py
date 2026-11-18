@@ -113,3 +113,32 @@ def test_output_filter_redacts_secrets_canaries_and_foreign_emails():
     d = OutputFilter().check_output(text)
     assert d.action == FLAG and d.replacement == clean
     assert OutputFilter().check_output("Refunds take 30 days.").action == ALLOW
+
+
+def test_malformed_arguments_are_blocked_not_crashed(tools):
+    g = ToolPolicy()
+    assert decide(g, tools, "calendar", action=["list"]).action == BLOCK
+    assert decide(g, tools, "email", action={"send": 1}, to="a@example.test").action == BLOCK
+    assert not is_sensitive_call(tools["email"], {"action": ["send"]})
+
+
+def test_a_crashing_guardrail_fails_closed():
+    from agentguard.agent.loop import Agent
+    from agentguard.agent.scripted import scripted_backend
+    from agentguard.guardrails.base import Guardrail
+    from agentguard.llm.cache import MemoryCache
+    from agentguard.llm.client import LLMClient
+
+    class Broken(Guardrail):
+        name = "broken"
+
+        def check_input(self, user_text):
+            raise RuntimeError("boom")
+
+    env = Environment(strict_sandbox=True)
+    try:
+        llm = LLMClient(scripted_backend, "scripted", 0.0, 0, cache=MemoryCache())
+        result = Agent(llm, build_tools(env), Config(), [Broken()]).run("hello?")
+        assert result.status == "blocked_input" and llm.calls == 0
+    finally:
+        env.close()

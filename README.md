@@ -36,6 +36,23 @@ Docker: `docker compose up --build` (API on http://localhost:8000, health check 
 
 Lint and format: `ruff check .` and `ruff format .`. Optional commit hooks (gitleaks secret scan, ruff): `pre-commit install`.
 
+## Reproduce the evaluation
+
+```bash
+# Free, offline: scripted worst-case agent on the whole test split (8 configurations)
+python -m agentguard.harness.runner --backend scripted --split test --out results/runs/scripted_test.jsonl
+
+# Real model (needs AGENTGUARD_GROQ_API_KEY in .env); resumable, pauses with exit code 75 when the
+# free daily token allowance is used up
+python -m agentguard.harness.runner --backend groq --split test --per-category 3 --benign-count 8   --configs none,all,g1,g2,g3,keyword,g4,g5 --out results/runs/groq_main.jsonl
+python -m agentguard.harness.runner --backend groq --split test --per-category 3 --no-benign   --configs none,all --seed 1 --temperature 0.7 --out results/runs/groq_var_s1.jsonl   # also seeds 2, 3
+
+# Table, charts and sample traces
+python -m agentguard.harness.report
+```
+
+The records behind the table are in `results/runs/`. Read `results/limitations.md` before quoting a number.
+
 ## Safety
 
 All attacks target this app only. Email is a mock outbox, the code runner is sandboxed, and test data is synthetic. No real services or personal data are used.

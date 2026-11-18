@@ -8,7 +8,7 @@ tool. Turning G2 on also switches the code runner to its strict profile (see har
 import re
 
 from agentguard.guardrails.base import BLOCK, Decision, Guardrail, RunState
-from agentguard.guardrails.policy import is_read_only_sql
+from agentguard.guardrails.policy import action_of, is_read_only_sql
 from agentguard.tools.base import Tool
 
 ALLOWED_RECIPIENT_DOMAIN = "example.test"
@@ -29,12 +29,12 @@ class ToolPolicy(Guardrail):
             return self._email(args)
         if tool.name == "database":
             return self._database(args)
-        if tool.name == "calendar" and args.get("action") not in CALENDAR_ACTIONS:
+        if tool.name == "calendar" and action_of(args) not in CALENDAR_ACTIONS:
             return Decision(BLOCK, f"calendar action {args.get('action')!r} is not permitted")
         return Decision()
 
     def _email(self, args: dict) -> Decision:
-        action = args.get("action")
+        action = action_of(args)
         if action not in EMAIL_ACTIONS:
             return Decision(BLOCK, f"email action {action!r} is not permitted")
         if action == "send":

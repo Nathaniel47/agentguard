@@ -6,3 +6,4 @@ pre-commit>=3.7
 # dataset build (reads parquet)
 pandas>=2.0
 pyarrow>=15
+matplotlib>=3.8

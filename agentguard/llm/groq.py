@@ -9,11 +9,12 @@ from agentguard.llm.client import LLMClient
 
 
 def recover_failed_generation(exc: Exception) -> str:
-    """gpt-oss sometimes wraps its JSON reply as a function call, which Groq rejects with
-    `tool_use_failed` while returning the text it generated. The intended action is inside it."""
+    """gpt-oss sometimes wraps its JSON reply as a function call, or answers in prose. Groq then
+    rejects the request (`tool_use_failed` or `output_parse_failed`) but returns the text the model
+    produced. An action, if there is one, is inside it; parse_action decides."""
     body = getattr(exc, "body", None)
     error = body.get("error", body) if isinstance(body, dict) else {}
-    if error.get("code") == "tool_use_failed":
+    if error.get("code") in ("tool_use_failed", "output_parse_failed"):
         return str(error.get("failed_generation") or "")
     return ""
 

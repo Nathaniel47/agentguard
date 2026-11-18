@@ -10,22 +10,25 @@ the free API tier resumable.
 
 import argparse
 import json
+import random
 import sys
 import time
 from collections.abc import Callable
+from dataclasses import replace
 from pathlib import Path
 
 from agentguard.agent.loop import Agent, RunResult
 from agentguard.agent.scripted import scripted_backend
-from agentguard.config import CONFIGS, Config
+from agentguard.config import CONFIGS, RATE_LIMITS, Config
 from agentguard.guardrails import build_guardrails
 from agentguard.guardrails.base import BLOCK, FLAG
+from agentguard.guardrails.baseline import KeywordBlocklist
 from agentguard.harness.cases import BenignTask, Case, load_benign, load_cases
 from agentguard.harness.scoring import attack_succeeded, check_benign
 from agentguard.llm.budget import DailyBudgetExhausted
 from agentguard.llm.cache import MemoryCache
 from agentguard.llm.client import LLMClient
-from agentguard.llm.meta import update_run_meta
+from agentguard.llm.meta import META_PATH, update_run_meta
 from agentguard.memory.store import MemoryStore
 from agentguard.tools.env import Environment
 from agentguard.tools.registry import build_tools
@@ -36,8 +39,16 @@ EXIT_PAUSED = 75  # daily token budget used up; rerun after 00:00 UTC
 TraceSink = Callable[[str, Trace], None]  # (run key, trace) -> stored
 
 
-def config_for(name: str) -> Config:
-    return Config().with_guardrails(*CONFIGS[name])
+BASELINES = {"keyword": KeywordBlocklist}  # simple comparison points, not part of CONFIGS
+
+
+def config_for(name: str, seed: int = 42, temperature: float = 0.0) -> Config:
+    names = () if name in BASELINES else CONFIGS[name]
+    return replace(Config(seed=seed, temperature=temperature), guardrails=frozenset(names))
+
+
+def guardrails_for(name: str, cfg: Config) -> list:
+    return [BASELINES[name]()] if name in BASELINES else build_guardrails(cfg)
 
 
 def make_llm(backend: str, cfg: Config | None = None) -> LLMClient:
@@ -71,6 +82,8 @@ def _record(kind, item_id, config_name, repeat, meta, outcome, results, llm_befo
         "id": item_id,
         "config": config_name,
         "repeat": repeat,
+        "seed": llm_before["llm"].seed,
+        "temperature": llm_before["llm"].temperature,
         **meta,
         "outcome": outcome,
         "status": last.status,
@@ -81,23 +94,31 @@ def _record(kind, item_id, config_name, repeat, meta, outcome, results, llm_befo
         "interventions": hits,
         "tokens": llm_before["llm"].tokens_used - llm_before["tokens"],
         "llm_calls": llm_before["llm"].calls - llm_before["calls"],
+        "model_calls": llm_before["llm"].logical_calls - llm_before["logical"],
+        "est_tokens": llm_before["llm"].est_tokens - llm_before["est"],
         "seconds": round(time.monotonic() - t0, 3),
     }
 
 
 def _start(llm: LLMClient) -> dict:
-    return {"llm": llm, "tokens": llm.tokens_used, "calls": llm.calls}
+    return {
+        "llm": llm,
+        "tokens": llm.tokens_used,
+        "calls": llm.calls,
+        "logical": llm.logical_calls,
+        "est": llm.est_tokens,
+    }
 
 
 def run_attack(
     case: Case, config_name: str, llm: LLMClient, repeat: int = 0, sink: TraceSink | None = None
 ) -> dict:
-    cfg = config_for(config_name)
+    cfg = config_for(config_name, llm.seed, llm.temperature)
     env = Environment(strict_sandbox=cfg.enabled("g2_tool_policy"))
     memory = MemoryStore()
     t0, before = time.monotonic(), _start(llm)
     try:
-        agent = Agent(llm, build_tools(env), cfg, build_guardrails(cfg), memory)
+        agent = Agent(llm, build_tools(env), cfg, guardrails_for(config_name, cfg), memory)
         results = []
         if case.category == "memory_poisoning":
             env.plant("memory", case.injection)
@@ -133,11 +154,11 @@ def run_benign(
     repeat: int = 0,
     sink: TraceSink | None = None,
 ) -> dict:
-    cfg = config_for(config_name)
+    cfg = config_for(config_name, llm.seed, llm.temperature)
     env = Environment(strict_sandbox=cfg.enabled("g2_tool_policy"))
     t0, before = time.monotonic(), _start(llm)
     try:
-        agent = Agent(llm, build_tools(env), cfg, build_guardrails(cfg), MemoryStore())
+        agent = Agent(llm, build_tools(env), cfg, guardrails_for(config_name, cfg), MemoryStore())
         result = agent.run(task.user_task, repeat=repeat)
         passed = check_benign(task, result.answer, env.snapshot())
         meta = {
@@ -190,15 +211,30 @@ def run_grid(
     return len(todo)
 
 
+def sample_per_category(cases: list[Case], k: int, seed: int = 42) -> list[Case]:
+    """A seeded, repeatable sample of up to k cases from every category."""
+    rng = random.Random(seed)
+    picked = []
+    for category in sorted({c.category for c in cases}):
+        group = sorted((c for c in cases if c.category == category), key=lambda c: c.id)
+        rng.shuffle(group)
+        picked += group[:k]
+    return picked
+
+
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     ap.add_argument("--backend", default="scripted", choices=["scripted", "groq", "gemini"])
-    ap.add_argument("--configs", default=",".join(CONFIGS))
+    ap.add_argument("--configs", default=",".join([*CONFIGS, *BASELINES]))
     ap.add_argument("--split", default="all", choices=["all", "dev", "test"])
     ap.add_argument("--limit", type=int, default=0, help="every k-th case (0 = all)")
+    ap.add_argument("--per-category", type=int, default=0, help="seeded sample per category")
+    ap.add_argument("--benign-count", type=int, default=0, help="first N benign tasks (0 = all)")
     ap.add_argument("--no-benign", action="store_true")
     ap.add_argument("--repeat", type=int, default=0)
     ap.add_argument("--out", type=Path, default=None)
+    ap.add_argument("--seed", type=int, default=42)
+    ap.add_argument("--temperature", type=float, default=0.0)
     ap.add_argument("--save-traces", action="store_true", help="store every trace in SQLite")
     args = ap.parse_args(argv)
 
@@ -211,18 +247,28 @@ def main(argv: list[str] | None = None) -> int:
     if args.split != "all":
         cases = [c for c in cases if c.split == args.split]
         benign = [b for b in benign if b.split == args.split]
+    if args.per_category:
+        cases = sample_per_category(cases, args.per_category)
+    if args.benign_count:
+        benign = benign[: args.benign_count]
     if args.limit:
         cases, benign = cases[:: args.limit], benign[:: args.limit]
     out = args.out or Path(f"results/runs/{args.backend}.jsonl")
-    cfg = Config()
+    cfg = Config(seed=args.seed, temperature=args.temperature)
     llm = make_llm(args.backend, cfg)
-    update_run_meta(
-        backend=args.backend,
-        model=llm.model,
-        temperature=cfg.temperature,
-        seed=cfg.seed,
-        configs=names,
-    )
+    meta = json.loads(META_PATH.read_text(encoding="utf-8")) if META_PATH.exists() else {}
+    runs = meta.get("runs", {})
+    runs[out.stem] = {
+        "backend": args.backend,
+        "model": llm.model,
+        "temperature": cfg.temperature,
+        "seed": cfg.seed,
+        "configs": names,
+        "split": args.split,
+        "per_category": args.per_category,
+        "benign_count": args.benign_count,
+    }
+    update_run_meta(runs=runs, rate_limits_assumed=RATE_LIMITS)
 
     def show(i: int, n: int, rec: dict) -> None:
         if i % 25 == 0 or i == n:

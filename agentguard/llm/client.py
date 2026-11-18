@@ -31,7 +31,10 @@ class LLMClient:
         self.expected_completion = expected_completion_tokens
         self.calls = 0
         self.cache_hits = 0
-        self.tokens_used = 0
+        self.tokens_used = 0  # tokens actually billed by the API
+        # What a run costs with no cache: every call counted, tokens estimated from the text.
+        self.logical_calls = 0
+        self.est_tokens = 0
 
     def complete(self, prompt: str, system: str | None = None, repeat: int = 0) -> str:
         """`repeat` is part of the cache key so repeated runs stay independent."""
@@ -39,11 +42,14 @@ class LLMClient:
             {"role": "user", "content": prompt}
         ]
         key = cache_key(self.model, messages, self.temperature, self.seed, repeat, self.settings)
+        self.logical_calls += 1
+        prompt_tokens = estimate_tokens((system or "") + prompt)
         hit = self.cache.get(key)
         if hit is not None:
             self.cache_hits += 1
+            self.est_tokens += prompt_tokens + estimate_tokens(hit)
             return hit
-        est = estimate_tokens((system or "") + prompt) + self.expected_completion
+        est = prompt_tokens + self.expected_completion
         if self.budget:
             self.budget.before_call(est)
         text, tokens = self.backend(
@@ -54,5 +60,6 @@ class LLMClient:
             self.budget.record(tokens)
         self.calls += 1
         self.tokens_used += tokens
+        self.est_tokens += prompt_tokens + estimate_tokens(text)
         self.cache.put(key, text)
         return text

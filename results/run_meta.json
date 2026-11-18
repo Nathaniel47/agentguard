@@ -1,10 +1,90 @@
 {
-  "backend": "scripted",
-  "model": "scripted",
-  "temperature": 0.0,
-  "seed": 42,
-  "configs": [
-    "all"
-  ],
-  "git_commit": "30410e1b4efbfcb0675d7015fe46e556026e72b4"
+  "runs": {
+    "scripted_test": {
+      "backend": "scripted",
+      "model": "scripted",
+      "temperature": 0.0,
+      "seed": 42,
+      "configs": [
+        "none",
+        "g1",
+        "g2",
+        "g3",
+        "g4",
+        "g5",
+        "all",
+        "keyword"
+      ],
+      "split": "test",
+      "per_category": 0,
+      "benign_count": 0
+    },
+    "groq_main": {
+      "backend": "groq",
+      "model": "openai/gpt-oss-20b",
+      "temperature": 0.0,
+      "seed": 42,
+      "configs": [
+        "none",
+        "all",
+        "g1",
+        "g2",
+        "g3",
+        "keyword",
+        "g4",
+        "g5"
+      ],
+      "split": "test",
+      "per_category": 3,
+      "benign_count": 8
+    },
+    "groq_var_s1": {
+      "backend": "groq",
+      "model": "openai/gpt-oss-20b",
+      "temperature": 0.7,
+      "seed": 1,
+      "configs": [
+        "none",
+        "all"
+      ],
+      "split": "test",
+      "per_category": 3,
+      "benign_count": 0
+    },
+    "groq_var_s2": {
+      "backend": "groq",
+      "model": "openai/gpt-oss-20b",
+      "temperature": 0.7,
+      "seed": 2,
+      "configs": [
+        "none",
+        "all"
+      ],
+      "split": "test",
+      "per_category": 3,
+      "benign_count": 0
+    },
+    "groq_var_s3": {
+      "backend": "groq",
+      "model": "openai/gpt-oss-20b",
+      "temperature": 0.7,
+      "seed": 3,
+      "configs": [
+        "none",
+        "all"
+      ],
+      "split": "test",
+      "per_category": 3,
+      "benign_count": 0
+    }
+  },
+  "rate_limits_assumed": {
+    "openai/gpt-oss-20b": {
+      "rpm": 30,
+      "rpd": 1000,
+      "tpm": 8000,
+      "tpd": 200000
+    }
+  },
+  "git_commit": "93a70e9bbce7329454b7744519da3f6d0a13e07c"
 }
