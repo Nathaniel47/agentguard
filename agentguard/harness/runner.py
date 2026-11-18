@@ -30,6 +30,7 @@ from agentguard.memory.store import MemoryStore
 from agentguard.tools.env import Environment
 from agentguard.tools.registry import build_tools
 from agentguard.tracing.spans import Trace
+from agentguard.tracing.store import TraceStore
 
 EXIT_PAUSED = 75  # daily token budget used up; rerun after 00:00 UTC
 TraceSink = Callable[[str, Trace], None]  # (run key, trace) -> stored
@@ -198,6 +199,7 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--no-benign", action="store_true")
     ap.add_argument("--repeat", type=int, default=0)
     ap.add_argument("--out", type=Path, default=None)
+    ap.add_argument("--save-traces", action="store_true", help="store every trace in SQLite")
     args = ap.parse_args(argv)
 
     from agentguard.config import load_env
@@ -226,8 +228,9 @@ def main(argv: list[str] | None = None) -> int:
         if i % 25 == 0 or i == n:
             print(f"{i}/{n} {rec['kind']} {rec['id']} {rec['config']}", flush=True)
 
+    sink = TraceStore().sink() if args.save_traces else None
     try:
-        n = run_grid(cases, benign, names, llm, out, args.repeat, progress=show)
+        n = run_grid(cases, benign, names, llm, out, args.repeat, sink=sink, progress=show)
     except DailyBudgetExhausted as exc:
         print(f"Paused: {exc}. Rerun after 00:00 UTC; finished runs are kept.")
         return EXIT_PAUSED

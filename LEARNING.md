@@ -66,3 +66,13 @@ The spec's Step 5 list names memory, harness, trace viewer and leaderboard; the 
 - **First contact with a real model:** a 5-case smoke run with Groq `openai/gpt-oss-20b` worked end to end (about 1,100 tokens per case, 2 of 5 attacks succeeded). It exposed one quirk: the model sometimes wraps its JSON as a function call and Groq rejects that request with `tool_use_failed`, but the error carries the text the model produced, so the backend recovers the action from it (tested). At about 1,100 tokens per case, one full configuration is roughly 250,000 tokens, more than one day of the 200,000-token free limit, so Step 6 will run subsets and spread runs across days.
 
 How to check: `pytest tests/test_guardrails.py tests/test_harness.py`, then `python -m agentguard.harness.runner --backend scripted --split dev --limit 5` and read the printed summary file `results/runs/scripted.jsonl`.
+
+## Step 5.3: Trace store and viewer
+
+- **Trace store** (`tracing/store.py`): every run's spans (input, model reply, tool call, guardrail decision, memory write, answer) are saved as JSON in a SQLite table, one row per session. A memory case stores two rows, the setup session and the later one. `python -m agentguard.harness.runner ... --save-traces` stores them for a whole grid.
+- **Only real checks are recorded**: a guardrail appears in the trace only for the hooks it implements. Before this change the trace showed all five guardrails "allowing" at every hook, which buried the one decision that mattered.
+- **Viewer** (`web/trace.html`, `web/trace.js`): a timeline of one run. Guardrail blocks are red, redactions amber, and clicking a row opens its raw attributes. The API serves `/api/trace/{id}` and `/api/traces`. Why it matters: when a guardrail blocks something, or fails to, you can see which step and why, which is the main thing a security reviewer wants.
+- **Safety detail**: traces contain attacker-written text, so the viewer inserts everything with `textContent` and never as HTML. A test fails if `innerHTML` ever appears in the script. Otherwise the trace viewer would be a stored cross-site-scripting hole in the demo.
+- **Spans follow OpenTelemetry's shape** (name, kind, attributes, start offset, duration), so an OTel export later is a field mapping.
+
+How to check: `pytest tests/test_traces.py`. To look at one: run the grid with `--save-traces`, start `python -m uvicorn api.main:app`, open `http://localhost:8000/trace.html` and click a trace.

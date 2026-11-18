@@ -17,6 +17,11 @@ class Decision:
 class Guardrail:
     name = "base"
 
+    def handles(self, hook: str) -> bool:
+        """True when this guardrail overrides the check for `hook` (input, tool_call, ...)."""
+        method = "check_" + hook
+        return getattr(type(self), method) is not getattr(Guardrail, method)
+
     def check_input(self, user_text: str) -> Decision:
         return Decision()
 

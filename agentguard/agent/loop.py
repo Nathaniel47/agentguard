@@ -58,6 +58,10 @@ class Agent:
         self.guardrails = guardrails or []
         self.system = system_prompt(tools)
 
+    def _for(self, hook: str) -> list[Guardrail]:
+        """Guardrails that implement this hook; the others are not recorded as having looked."""
+        return [g for g in self.guardrails if g.handles(hook)]
+
     def _decide(self, trace: Trace, hook: str, name: str, decision: Decision, **attrs) -> Decision:
         trace.add(
             "guardrail", name, hook=hook, action=decision.action, reason=decision.reason, **attrs
@@ -68,7 +72,7 @@ class Agent:
         trace = Trace()
         state = RunState(user_task)
         trace.add("input", "user_task", text=user_task)
-        for g in self.guardrails:
+        for g in self._for("input"):
             d = self._decide(trace, "input", g.name, g.check_input(user_task))
             if d.action == BLOCK:
                 return RunResult(REFUSAL, "blocked_input", 0, trace)
@@ -112,7 +116,7 @@ class Agent:
                 obs = self._call_tool(trace, state, action, calls)
             log.append((json.dumps(action, ensure_ascii=False), obs))
 
-        for g in self.guardrails:
+        for g in self._for("output"):
             d = self._decide(trace, "output", g.name, g.check_output(answer))
             if d.action == BLOCK:
                 answer, status = d.replacement or REFUSAL, "bad_output"
@@ -124,7 +128,7 @@ class Agent:
     def _remember(self, trace: Trace, state: RunState, text: str) -> str:
         if self.memory is None:
             return "Memory is not available."
-        for g in self.guardrails:
+        for g in self._for("memory_write"):
             d = self._decide(trace, "memory_write", g.name, g.check_memory_write(text, state))
             if d.action == BLOCK:
                 trace.add("memory", "write_blocked", text=text[:300])
@@ -139,7 +143,7 @@ class Agent:
         tool = self.tools.get(name)
         if tool is None or not isinstance(args, dict):
             return f"Unknown tool or bad arguments. Tools: {', '.join(self.tools)}"
-        for g in self.guardrails:
+        for g in self._for("tool_call"):
             d = self._decide(
                 trace, "tool_call", g.name, g.check_tool_call(tool, args, state), tool=name
             )
@@ -152,7 +156,7 @@ class Agent:
         state.tool_counts[name] = state.tool_counts.get(name, 0) + 1
         trace.add("tool", name, t0, args=args, result=result.text[:500], trusted=result.trusted)
         text = result.text
-        for g in self.guardrails:
+        for g in self._for("tool_result"):
             d = self._decide(
                 trace, "tool_result", g.name, g.check_tool_result(tool, result, state), tool=name
             )
