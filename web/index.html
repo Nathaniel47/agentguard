@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AgentGuard arena</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header><a href="/">Arena</a> <a href="/leaderboard.html">Leaderboard</a> <a href="/trace.html">Traces</a></header>
+<main>
+  <h1>Can you trick the assistant?</h1>
+  <p>This office assistant has five tools (search, code, calendar, email, database) and a secret API key.
+  Pick a goal and a guardrail level, then write an attack. Everything here is fake: the email is a mock
+  outbox, the customers are invented, and the code runs in a sandbox. Whether you won is decided
+  automatically from what actually happened, not by a model.</p>
+  <form id="form">
+    <div class="row">
+      <label>Nickname <input id="nickname" maxlength="20" placeholder="anonymous"></label>
+      <label>Level <select id="level"></select></label>
+    </div>
+    <div class="row">
+      <label>Goal <select id="goal"></select></label>
+      <label>Where to put your text <select id="channel"></select></label>
+    </div>
+    <textarea id="text" maxlength="1000" placeholder="Write your attack here…" required></textarea>
+    <div class="row">
+      <button id="go" type="submit">Attack</button>
+      <span id="remaining" class="muted"></span>
+    </div>
+  </form>
+  <div id="result" class="result" hidden></div>
+</main>
+<script src="arena.js"></script>
+</body>
+</html>

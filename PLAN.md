@@ -59,7 +59,7 @@ flowchart LR
 - **Memory** (`agentguard/memory/`): `remember(text, source)` and `recall(query)`. Entries keep their source and trust level. G4 scans writes for instruction-like text, impersonation of the system or user, and entries that would change tool permissions.
 - **Harness** (`agentguard/harness/`): loads cases, runs each against a fresh agent state (fresh SQLite files), then the scorer checks state for the case's success marker.
 - **Tracing** (`agentguard/tracing/`): span recorder and SQLite store.
-- **API and web** (`api/`, `web/`): `/arena/attempt`, `/trace/{id}`, `/leaderboard`, `/results`.
+- **API and web** (`api/`, `web/`): JSON under `/api/` (`/api/arena/attempt`, `/api/trace/{id}`, `/api/leaderboard`; `/api/results` is added in Step 7) and static pages for the arena (`/`), trace viewer (`/trace.html`) and leaderboard (`/leaderboard.html`). The arena always uses the strict sandbox profile, caps each attempt at 1,000 characters, rate-limits per client and counts every attempt against a daily cap.
 
 **Metrics**
 - **Attack success rate (ASR)** per attack category and per configuration, with 95% confidence intervals.

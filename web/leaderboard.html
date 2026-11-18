@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AgentGuard leaderboard</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header><a href="/">Arena</a> <a href="/leaderboard.html">Leaderboard</a> <a href="/trace.html">Traces</a></header>
+<main>
+  <h1>Leaderboard</h1>
+  <p id="totals" class="muted">Loading…</p>
+  <h2>Best attackers</h2>
+  <p class="muted">Ranked by the highest guardrail level beaten, then by how many different goals were reached.</p>
+  <table><thead><tr><th>#</th><th>Nickname</th><th>Best level beaten</th><th>Wins</th></tr></thead>
+  <tbody id="players"></tbody></table>
+  <h2>How often attacks work, by level</h2>
+  <table><thead><tr><th>Level</th><th>Attempts</th><th>Successes</th></tr></thead>
+  <tbody id="levels"></tbody></table>
+  <h2>Recent wins</h2>
+  <ul id="recent" class="recent"></ul>
+</main>
+<script src="leaderboard.js"></script>
+</body>
+</html>
