@@ -117,3 +117,12 @@ How to check: `pytest`, then `python -m agentguard.harness.report` and open `res
 - **Checking it**: `deploy/smoke_test.py` runs against any URL (health, options, a winning attack at level 1, the sandbox running code, the same attack blocked at level 4). CI builds the exported folder as a Docker image and runs this test against the locked-down container, so the deployment path is tested on every push.
 
 How to check: `pytest`, then `uvicorn api.main:app --port 7860` and open http://localhost:7860, click an example. To deploy, follow DEPLOY.md.
+
+## Step 8: README and write-up
+
+- **README** (`README.md`): written for a stranger who has two minutes. It opens with one sentence of purpose, a demo link and a GIF placeholder, then the architecture diagram, a compact results table with the plain-language reading of it, how to run and reproduce, a repository map, limitations and future work. The demo link is a placeholder until you deploy (DEPLOY.md), and the GIF is a one-line comment to replace after you record the arena.
+- **Write-up** (`docs/WRITEUP.md`, about three pages): problem, method, results, lessons, limitations. The main argument is that defences cover different routes, that restricting what the agent may do beat trying to detect attacks, and that an evaluation harness has to be validated against the real model before any number from it can be trusted. Why it matters for a PhD application: it shows a measured, reproducible result with its weaknesses stated, not a demo.
+- **Portfolio card** (`PORTFOLIO.md`): a 120-word description for your website, and one sentence to use when emailing researchers. The sentence names only what the project does and the benchmarks it follows (InjecAgent, AgentDojo, AgentPoison); it makes no claims about any lab's work, so it is safe to paste, and you should add one sentence of your own about their specific papers.
+- **Consistency check**: every number in the README and write-up was copied from `results/results_table.md`. If you rerun the experiments (for example to finish seed 3), regenerate the table with `python -m agentguard.harness.report` and update those numbers.
+
+How to check: open README.md on GitHub and confirm the diagram renders and the chart image shows.

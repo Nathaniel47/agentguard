@@ -9,4 +9,4 @@
 - [x] Step 5 Remaining features: memory, harness, trace viewer, leaderboard
 - [x] Step 6 Evaluation
 - [x] Step 7 Demo and deploy
-- [ ] Step 8 README and write-up
+- [x] Step 8 README and write-up
