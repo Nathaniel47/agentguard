@@ -104,6 +104,7 @@ class Sandbox:
         # `root` holds one `work` folder per run; files written next to it (`../`) stay inside root.
         self.root = root or Path(tempfile.mkdtemp(prefix="agentguard_sbx_"))
         self.work = self.root / "work"
+        self.history: list[SandboxResult] = []  # every run, so scorers can inspect them
 
     def close(self) -> None:
         shutil.rmtree(self.root, ignore_errors=True)
@@ -113,6 +114,11 @@ class Sandbox:
         return [p for p in self.root.rglob("*") if marker in p.name and self.work not in p.parents]
 
     def run(self, code: str) -> SandboxResult:
+        result = self._execute(code)
+        self.history.append(result)
+        return result
+
+    def _execute(self, code: str) -> SandboxResult:
         if self.strict:
             reason = check_code(code)
             if reason:

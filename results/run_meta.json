@@ -1,0 +1,10 @@
+{
+  "backend": "groq",
+  "model": "openai/gpt-oss-20b",
+  "temperature": 0.0,
+  "seed": 42,
+  "configs": [
+    "none"
+  ],
+  "git_commit": "aef3b33e7d32fc1b1850bd0f2d3bb6d88198b03a"
+}

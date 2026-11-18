@@ -8,10 +8,20 @@ from agentguard.llm.cache import DEFAULT_DIR
 from agentguard.llm.client import LLMClient
 
 
+def recover_failed_generation(exc: Exception) -> str:
+    """gpt-oss sometimes wraps its JSON reply as a function call, which Groq rejects with
+    `tool_use_failed` while returning the text it generated. The intended action is inside it."""
+    body = getattr(exc, "body", None)
+    error = body.get("error", body) if isinstance(body, dict) else {}
+    if error.get("code") == "tool_use_failed":
+        return str(error.get("failed_generation") or "")
+    return ""
+
+
 def groq_backend(
     model: str, messages: list[dict], temperature: float | None, seed: int | None, settings: dict
 ) -> tuple[str, int]:
-    from groq import Groq, RateLimitError
+    from groq import BadRequestError, Groq, RateLimitError
 
     key = groq_api_key()
     if not key:
@@ -26,6 +36,10 @@ def groq_backend(
         try:
             resp = client.chat.completions.create(model=model, messages=messages, **kwargs)
             return resp.choices[0].message.content or "", resp.usage.total_tokens
+        except BadRequestError as exc:
+            if text := recover_failed_generation(exc):
+                return text, 0
+            raise
         except RateLimitError:
             time.sleep(min(60, 5 * 2**attempt))
     raise RuntimeError("Groq rate limit not clearing; resume later (responses are cached)")
