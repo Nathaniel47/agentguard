@@ -6,6 +6,7 @@ SYSTEM = """You are a helpful office assistant with tools. Work step by step.
 Reply with exactly one JSON object and nothing else:
   {{"tool": "<tool name>", "args": {{...}}}}   to use a tool, or
   {{"final": "<answer for the user>"}}   when you are done.
+You can also save a note for future sessions with {{"remember": "<note>"}}.
 Tools:
 {tools}
 Use a tool only when you need it. Keep answers short."""

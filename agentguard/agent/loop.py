@@ -8,6 +8,7 @@ from agentguard.agent.prompt import build_prompt, system_prompt
 from agentguard.config import Config
 from agentguard.guardrails.base import BLOCK, FLAG, Decision, Guardrail, RunState
 from agentguard.llm.client import LLMClient
+from agentguard.memory.store import MemoryStore, format_context
 from agentguard.tools.base import Tool, ToolResult
 from agentguard.tracing.spans import Trace
 
@@ -36,7 +37,7 @@ def parse_action(text: str) -> dict | None:
                     obj = json.loads(text[start : end + 1])
                 except json.JSONDecodeError:
                     break
-                if isinstance(obj, dict) and ("tool" in obj or "final" in obj):
+                if isinstance(obj, dict) and ("tool" in obj or "final" in obj or "remember" in obj):
                     return obj
                 break
         start = text.find("{", start + 1)
@@ -50,8 +51,9 @@ class Agent:
         tools: dict[str, Tool],
         config: Config | None = None,
         guardrails: list[Guardrail] | None = None,
+        memory: MemoryStore | None = None,
     ):
-        self.llm, self.tools = llm, tools
+        self.llm, self.tools, self.memory = llm, tools, memory
         self.config = config or Config()
         self.guardrails = guardrails or []
         self.system = system_prompt(tools)
@@ -70,6 +72,19 @@ class Agent:
             d = self._decide(trace, "input", g.name, g.check_input(user_task))
             if d.action == BLOCK:
                 return RunResult(REFUSAL, "blocked_input", 0, trace)
+
+        if self.memory is not None:
+            recalled = self.memory.recall(user_task)
+            if recalled:
+                trace.add(
+                    "memory",
+                    "recall",
+                    ids=[e.id for e in recalled],
+                    untrusted=[e.id for e in recalled if not e.trusted],
+                )
+                parts = (extra_context, format_context(recalled))
+                extra_context = "\n\n".join(p for p in parts if p)
+                state.saw_untrusted = any(not e.trusted for e in recalled)
 
         log: list[tuple[str, str]] = []
         calls: list[dict] = []
@@ -91,7 +106,10 @@ class Agent:
             if "final" in action:
                 answer, status = str(action["final"]), "answered"
                 break
-            obs = self._call_tool(trace, state, action, calls)
+            if "remember" in action:
+                obs = self._remember(trace, state, str(action["remember"]))
+            else:
+                obs = self._call_tool(trace, state, action, calls)
             log.append((json.dumps(action, ensure_ascii=False), obs))
 
         for g in self.guardrails:
@@ -102,6 +120,19 @@ class Agent:
                 answer = d.replacement
         trace.add("output", "final_answer", text=answer, status=status)
         return RunResult(answer, status, len(log), trace, calls)
+
+    def _remember(self, trace: Trace, state: RunState, text: str) -> str:
+        if self.memory is None:
+            return "Memory is not available."
+        for g in self.guardrails:
+            d = self._decide(trace, "memory_write", g.name, g.check_memory_write(text, state))
+            if d.action == BLOCK:
+                trace.add("memory", "write_blocked", text=text[:300])
+                return f"Memory write blocked by policy: {d.reason}"
+        source = "agent_after_untrusted" if state.saw_untrusted else "agent"
+        entry_id = self.memory.remember(text, source, trusted=not state.saw_untrusted)
+        trace.add("memory", "write", id=entry_id, source=source, text=text[:300])
+        return "Saved to memory."
 
     def _call_tool(self, trace: Trace, state: RunState, action: dict, calls: list[dict]) -> str:
         name, args = str(action.get("tool")), action.get("args") or {}
@@ -118,6 +149,7 @@ class Agent:
         t0 = trace.now()
         result: ToolResult = tool.run(args)
         calls.append({"tool": name, "args": args, "error": result.error})
+        state.tool_counts[name] = state.tool_counts.get(name, 0) + 1
         trace.add("tool", name, t0, args=args, result=result.text[:500], trusted=result.trusted)
         text = result.text
         for g in self.guardrails:

@@ -41,8 +41,8 @@ _CODE = {
 }
 
 
-def _parse(prompt: str) -> tuple[str, list[tuple[dict, str]]]:
-    task = prompt.split("User request: ", 1)[1]
+def _parse(prompt: str) -> tuple[str, str, list[tuple[dict, str]]]:
+    extra, task = prompt.split("User request: ", 1)
     task = re.split(r"\n\nStep \d+ action:|\n\nYour next JSON", task)[0]
     steps = []
     for _, call, obs in _STEP.findall(prompt):
@@ -50,7 +50,7 @@ def _parse(prompt: str) -> tuple[str, list[tuple[dict, str]]]:
             steps.append((json.loads(call), obs))
         except json.JSONDecodeError:
             continue
-    return task, steps
+    return task, extra, steps
 
 
 def _canon(action: dict) -> str:
@@ -184,17 +184,31 @@ def _find(text: str, pattern: str, flags: int = 0) -> str:
     return m.group(0)[:300] if m else ""
 
 
+def _remember_action(task: str, steps: list[tuple[dict, str]]) -> list[dict]:
+    """A note to save when the task says "remember": the stated fact, or what the page said."""
+    if not re.search(r"\bremember\b", task, re.I):
+        return []
+    if m := re.search(r"remember that (.+?)\.?$", task, re.I):
+        return [{"remember": m.group(1)}]
+    if steps:  # a gullible agent saves the whole page, instructions included
+        return [{"remember": re.sub(r"^\[[\w-]+\] [^:]+: ", "", steps[0][1])[:600]}]
+    return []
+
+
 def decide(prompt: str) -> dict:
-    task, steps = _parse(prompt)
+    task, extra, steps = _parse(prompt)
     seen = "\n".join(obs for _, obs in steps)
-    own = ("Email queued", "Added event", "Deleted", "OK,")  # our own confirmations
-    sources = [task] + [obs for _, obs in steps if not obs.startswith(own)]
+    # Our own confirmations and policy messages are not instructions.
+    own = ("Email queued", "Added event", "Deleted", "OK,", "Saved to memory", "Memory write",
+           "Blocked by policy", "Result withheld")  # fmt: skip
+    sources = [task, extra] + [obs for _, obs in steps if not obs.startswith(own)]
     plan = _benign_plan(task)
     leak = False
     for text in sources:
         actions, flag = _instructions(text, seen)
         plan += actions
         leak = leak or flag
+    plan += _remember_action(task, steps)
     done = {_canon(a) for a, _ in steps}
     for action in plan:
         if _canon(action) not in done:
