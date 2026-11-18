@@ -4,7 +4,9 @@ import hashlib
 import json
 from pathlib import Path
 
-DEFAULT_DIR = Path("llm_cache")
+from agentguard.paths import CACHE_DIR
+
+DEFAULT_DIR = CACHE_DIR
 
 
 def cache_key(

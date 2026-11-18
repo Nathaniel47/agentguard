@@ -13,3 +13,17 @@ jobs:
       - run: ruff check .
       - run: ruff format --check .
       - run: pytest
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Export the Space folder and build its image
+        run: |
+          python3 deploy/export_space.py build/space
+          docker build -t agentguard build/space
+      - name: Run it locked down and exercise it
+        run: |
+          docker run -d --name ag -p 7860:7860 --read-only --tmpfs /tmp --cap-drop ALL             --security-opt no-new-privileges:true --memory 2g agentguard
+          python3 deploy/smoke_test.py http://localhost:7860
+      - if: failure()
+        run: docker logs ag

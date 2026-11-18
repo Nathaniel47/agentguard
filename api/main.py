@@ -3,10 +3,11 @@
 The static pages in web/ are served from the same process, so the whole demo is one container.
 """
 
+import os
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException, Request
-from fastapi.responses import JSONResponse
+from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
@@ -16,6 +17,8 @@ from agentguard.llm.budget import DailyBudgetExhausted
 from agentguard.tracing.store import DEFAULT_PATH, TraceStore
 
 WEB_DIR = Path(__file__).resolve().parent.parent / "web"
+RESULTS_DIR = Path(os.environ.get("AGENTGUARD_RESULTS_DIR", "results"))
+RESULT_CHARTS = ("chart_attack_success.png", "chart_by_config.png", "chart_cost.png")
 
 
 class AttemptIn(BaseModel):
@@ -71,6 +74,27 @@ def create_app(trace_store: TraceStore | None = None, arena: Arena | None = None
     @app.get("/api/leaderboard")
     def leaderboard() -> dict:
         return arena.leaderboard()
+
+    @app.get("/api/results")
+    def results() -> dict:
+        """The published evaluation. Only a fixed list of files is ever served from results/."""
+
+        def read(name: str) -> str:
+            path = RESULTS_DIR / name
+            return path.read_text(encoding="utf-8") if path.exists() else ""
+
+        return {
+            "table": read("results_table.md"),
+            "limitations": read("limitations.md"),
+            "charts": [c for c in RESULT_CHARTS if (RESULTS_DIR / c).exists()],
+        }
+
+    @app.get("/api/results/chart/{name}")
+    def result_chart(name: str) -> FileResponse:
+        path = RESULTS_DIR / name
+        if name not in RESULT_CHARTS or not path.exists():
+            raise HTTPException(status_code=404, detail="no such chart")
+        return FileResponse(path, media_type="image/png")
 
     if WEB_DIR.exists():
         app.mount("/", StaticFiles(directory=WEB_DIR, html=True), name="web")

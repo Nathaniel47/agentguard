@@ -130,3 +130,39 @@ def test_web_scripts_never_parse_server_text_as_html():
     for name in ("arena.js", "leaderboard.js", "trace.js"):
         js = (WEB_DIR / name).read_text(encoding="utf-8")
         assert "innerHTML" not in js and "insertAdjacentHTML" not in js, name
+
+
+def test_options_name_the_model_and_nicknames_are_plain_ascii():
+    arena = make_arena(limiter=RateLimiter(100))
+    assert arena.options()["model"] == "scripted"
+    arena.attempt("Zoë<b>é", 1, "email", "user_message", EMAIL_ATTACK, "c")
+    assert arena.leaderboard()["players"][0]["nickname"] == "Zob"
+
+
+def test_results_endpoints_serve_only_the_allowed_files(tmp_path, monkeypatch):
+    import api.main as main
+
+    (tmp_path / "results_table.md").write_text("# Results\n", encoding="utf-8")
+    (tmp_path / "chart_cost.png").write_bytes(b"\x89PNG fake")
+    (tmp_path / "arena.sqlite3").write_bytes(b"secret rows")
+    monkeypatch.setattr(main, "RESULTS_DIR", tmp_path)
+    arena = make_arena()
+    client = TestClient(create_app(arena.traces, arena))
+    data = client.get("/api/results").json()
+    assert data["table"] == "# Results\n" and data["charts"] == ["chart_cost.png"]
+    assert client.get("/api/results/chart/chart_cost.png").status_code == 200
+    for name in ("arena.sqlite3", "..%2Fpyproject.toml", "results_table.md"):
+        assert client.get(f"/api/results/chart/{name}").status_code == 404
+    assert "AgentGuard results" in client.get("/results.html").text
+
+
+def test_space_export_contains_only_what_the_app_needs(tmp_path):
+    from deploy.export_space import export
+
+    out = export(tmp_path / "space")
+    assert (out / "api" / "main.py").exists() and (out / "web" / "index.html").exists()
+    assert (out / "Dockerfile").exists() and (out / "requirements.txt").exists()
+    assert (out / "README.md").read_text(encoding="utf-8").startswith("---\ntitle:")
+    assert "sdk: docker" in (out / "README.md").read_text(encoding="utf-8")
+    names = {p.name for p in out.rglob("*")}
+    assert not {"tests", "data", ".env", "arena.sqlite3", "runs", "__pycache__"} & names

@@ -1,10 +1,15 @@
 services:
   api:
     build: .
-    ports: ["8000:8000"]
-    env_file: [.env]
-    volumes: ["./data:/app/data", "./results:/app/results"]
+    ports: ["7860:7860"]
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      AGENTGUARD_ARENA_BACKEND: ${AGENTGUARD_ARENA_BACKEND:-scripted}
+      AGENTGUARD_ARENA_DAILY_CAP: ${AGENTGUARD_ARENA_DAILY_CAP:-100}
     mem_limit: 2g
+    pids_limit: 256
     # The agent's code sandbox runs inside this container; keep it locked down.
     read_only: true
     tmpfs: ["/tmp"]

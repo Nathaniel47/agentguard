@@ -1,6 +1,15 @@
 .git
+.github
 .env
 .venv
-data/raw
-data/chroma
+.pytest_cache
+.ruff_cache
 __pycache__
+llm_cache
+tests
+data
+docs
+results/runs
+results/*.sqlite3
+results/data_report.md
+build

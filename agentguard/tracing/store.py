@@ -7,7 +7,9 @@ import sqlite3
 import time
 from pathlib import Path
 
-DEFAULT_PATH = Path("results/traces.sqlite3")
+from agentguard.paths import STATE_DIR
+
+DEFAULT_PATH = STATE_DIR / "traces.sqlite3"
 
 
 class TraceStore:

@@ -8,5 +8,5 @@
 - [x] Step 4 Core feature: agent with tools
 - [x] Step 5 Remaining features: memory, harness, trace viewer, leaderboard
 - [x] Step 6 Evaluation
-- [ ] Step 7 Demo and deploy
+- [x] Step 7 Demo and deploy
 - [ ] Step 8 README and write-up

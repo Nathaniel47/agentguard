@@ -35,3 +35,10 @@ button:disabled { opacity: .5; cursor: wait; }
 table { border-collapse: collapse; width: 100%; }
 th, td { border-bottom: 1px solid var(--line); padding: 8px; text-align: left; overflow-wrap: anywhere; }
 @media (max-width: 560px) { .span { grid-template-columns: 1fr; } }
+
+.examples { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 8px; }
+button.example { background: var(--card); color: var(--fg); border-color: var(--line); }
+.scroll { overflow-x: auto; margin-bottom: 16px; }
+.chart { max-width: 100%; height: auto; margin-bottom: 16px; background: #fff; border-radius: 6px; }
+.doc p { margin: 6px 0; }
+.doc th { white-space: nowrap; }

@@ -2,9 +2,9 @@
 
 A small LLM agent with five tools and long-term memory, wrapped in separate guardrails, plus an automated red-team harness that attacks it and measures which guardrail stops which attack.
 
-> Status: setup complete (Step 2). See [PLAN.md](PLAN.md) for the design and [BUILD_STEPS.md](BUILD_STEPS.md) for progress.
+> Status: Steps 1 to 7 complete (data, agent, guardrails, harness, evaluation, demo). See [PLAN.md](PLAN.md) for the design and [BUILD_STEPS.md](BUILD_STEPS.md) for progress.
 
-Demo link, architecture diagram and results table: added in Step 8.
+Demo link, architecture diagram and results summary: added in Step 8. To deploy the demo yourself, follow [DEPLOY.md](DEPLOY.md); the evaluation is in [results/](results/results_table.md) with its [limitations](results/limitations.md).
 
 ## Run locally
 
@@ -18,7 +18,7 @@ python -m venv .venv
 pip install -r requirements-dev.txt
 Copy-Item .env.example .env   # then fill in the keys you have
 pytest
-uvicorn api.main:app --reload
+uvicorn api.main:app --reload --port 7860
 ```
 
 macOS / Linux:
@@ -29,10 +29,10 @@ source .venv/bin/activate
 pip install -r requirements-dev.txt
 cp .env.example .env   # then fill in the keys you have
 pytest
-uvicorn api.main:app --reload
+uvicorn api.main:app --reload --port 7860
 ```
 
-Docker: `docker compose up --build` (API on http://localhost:8000, health check at `/health`).
+Docker: `docker compose up --build` (arena at http://localhost:7860, health check at `/health`). Set `AGENTGUARD_ARENA_BACKEND=groq` and a Groq key in `.env` to use the real model; the default is the offline scripted agent.
 
 Lint and format: `ruff check .` and `ruff format .`. Optional commit hooks (gitleaks secret scan, ruff): `pre-commit install`.
 
