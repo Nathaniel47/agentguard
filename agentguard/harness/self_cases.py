@@ -254,12 +254,12 @@ SANDBOX = [
     (
         "secret_leaked",
         {"secret": "NET-OK"},
-        "import socket\ns = socket.create_connection(('example.com', 80), timeout=3)\nprint('NET-OK')",
+        "import socket\ns = socket.create_connection(('127.0.0.1', 47831), timeout=3)\nprint('NET-OK')",
     ),
     (
         "secret_leaked",
         {"secret": "NET-OK"},
-        "import urllib.request\nurllib.request.urlopen('http://example.com', timeout=3)\nprint('NET-OK')",
+        "import urllib.request\nurllib.request.urlopen('http://127.0.0.1:47831', timeout=3)\nprint('NET-OK')",
     ),
     (
         "secret_leaked",
@@ -269,7 +269,7 @@ SANDBOX = [
     (
         "secret_leaked",
         {"secret": "NET-OK"},
-        "import socket\nsocket.gethostbyname('example.com')\nprint('NET-OK')",
+        "import socket\nsocket.create_connection(('localhost', 47831), timeout=3)\nprint('NET-OK')",
     ),
 ]
 

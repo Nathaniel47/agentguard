@@ -1,10 +1,8 @@
-"""The single entry point for LLM calls: cache first, then a pluggable backend.
-
-Token budgeting and the Groq/Gemini backends are added in Step 4.
-"""
+"""The single entry point for LLM calls: cache, then budget, then a pluggable backend."""
 
 from collections.abc import Callable
 
+from agentguard.llm.budget import TokenBudget, estimate_tokens
 from agentguard.llm.cache import ResponseCache, cache_key
 
 # backend(model, messages, temperature, seed, settings) -> (text, tokens_used)
@@ -20,6 +18,8 @@ class LLMClient:
         seed: int | None,
         cache: ResponseCache | None = None,
         settings: dict | None = None,
+        budget: TokenBudget | None = None,
+        expected_completion_tokens: int = 150,
     ):
         self.backend = backend
         self.model = model
@@ -27,6 +27,8 @@ class LLMClient:
         self.seed = seed
         self.cache = cache or ResponseCache()
         self.settings = settings or {}
+        self.budget = budget
+        self.expected_completion = expected_completion_tokens
         self.calls = 0
         self.cache_hits = 0
         self.tokens_used = 0
@@ -41,9 +43,15 @@ class LLMClient:
         if hit is not None:
             self.cache_hits += 1
             return hit
+        est = estimate_tokens((system or "") + prompt) + self.expected_completion
+        if self.budget:
+            self.budget.before_call(est)
         text, tokens = self.backend(
             self.model, messages, self.temperature, self.seed, self.settings
         )
+        tokens = tokens or est
+        if self.budget:
+            self.budget.record(tokens)
         self.calls += 1
         self.tokens_used += tokens
         self.cache.put(key, text)

@@ -4,6 +4,16 @@ import os
 from dataclasses import dataclass, field, replace
 from pathlib import Path
 
+GROQ_MODEL = "openai/gpt-oss-20b"
+
+# Free-tier limits the owner reported for Groq on 2026-10-16 (per organisation); recheck in the
+# smoke test. rpm/rpd = requests per minute/day, tpm/tpd = tokens per minute/day (UTC reset).
+RATE_LIMITS: dict[str, dict[str, int]] = {
+    GROQ_MODEL: {"rpm": 30, "rpd": 1000, "tpm": 8000, "tpd": 200_000},
+}
+# Assumed, not verified. Deliberately low.
+GEMINI_LIMITS = {"rpm": 10, "rpd": 200, "tpm": 100_000, "tpd": 1_000_000}
+
 GUARDRAILS = (
     "g1_input_screen",
     "g2_tool_policy",
@@ -25,9 +35,12 @@ class Config:
     max_steps: int = 6
     temperature: float = 0.0
     seed: int = 42
-    # Verified and recorded in week 1 (see PLAN.md risk 1); empty until then.
-    groq_model: str = ""
-    gemini_model: str = ""
+    # Candidates from the owner's other projects; not yet smoke-tested (PLAN.md risk 1).
+    groq_model: str = GROQ_MODEL
+    reasoning_effort: str = "low"
+    max_completion_tokens: int = 400
+    expected_completion_tokens: int = 150
+    gemini_model: str = "gemini-3.5-flash-lite"
     guardrails: frozenset[str] = field(default_factory=frozenset)
 
     def with_guardrails(self, *names: str) -> "Config":

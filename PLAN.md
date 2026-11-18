@@ -54,7 +54,7 @@ flowchart LR
 
 - **Agent loop** (`agentguard/agent/`): builds the prompt, asks the LLM for the next action, runs it, appends the observation, stops on a final answer or at the step cap. All LLM calls go through the cached client in `agentguard/llm/`.
 - **Tools** (`agentguard/tools/`): each tool is a function with a JSON-schema description, and each tool call returns a result plus a `trusted` flag (user-supplied content is trusted, search results and file contents are not).
-- **Sandbox**: `run_code` runs Python in a separate process with a time limit, memory limit, empty environment, a temporary working directory, an import allowlist and no network. The deployed demo runs it inside the container, which is the second layer. Escape attempts are part of the test set.
+- **Sandbox**: two profiles. *Naive* is a plain subprocess with a decoy env canary (the baseline a quick demo would ship, and the one the `none` configuration uses). *Strict* adds the import allowlist and shorter limits and is switched on by guardrail G2. `run_code` runs Python in a separate process with a time limit, memory limit, empty environment, a temporary working directory, an import allowlist and no network. The deployed demo runs it inside the container, which is the second layer. Escape attempts are part of the test set.
 - **Guardrails** (`agentguard/guardrails/`): each one exposes `check(event) -> Decision(allow | block | flag, reason)`. The agent loop calls the enabled ones at fixed points, and every decision goes into the trace.
 - **Memory** (`agentguard/memory/`): `remember(text, source)` and `recall(query)`. Entries keep their source and trust level. G4 scans writes for instruction-like text, impersonation of the system or user, and entries that would change tool permissions.
 - **Harness** (`agentguard/harness/`): loads cases, runs each against a fresh agent state (fresh SQLite files), then the scorer checks state for the case's success marker.
@@ -113,7 +113,7 @@ agentguard/
 | 1 | Setup and plan checks | Repo, CI, gitleaks, `.env.example`. Groq tool-calling model and Gemini model verified and recorded. Licences of candidate public test sets checked. |
 | 2 | Data | Case schema, public cases loaded and adapted, self-written cases started, 40 benign tasks, data report. |
 | 3 | Agent and tools | Agent loop, five tools, sandbox with escape tests, scripted agent, traces recorded. |
-| 4 | Memory and guardrails | Memory store, G1 to G5, each with tests. |
+| 4 | Memory and guardrails (Step 5, parts 1 and 2) | Memory store, G1 to G5, each with tests. |
 | 5 | Harness | 220 cases with automatic scoring. Scripted-agent grid runs in CI. |
 | 6 | Real LLM evaluation | Groq runs, resumable over several days, variance runs, Gemini confirmation if there is time. |
 | 7 | Arena and trace viewer | FastAPI plus web arena, trace viewer, leaderboard with caps. Deployed. |

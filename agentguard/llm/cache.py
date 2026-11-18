@@ -36,3 +36,17 @@ class ResponseCache:
     def put(self, key: str, text: str) -> None:
         self.dir.mkdir(parents=True, exist_ok=True)
         (self.dir / f"{key}.json").write_text(json.dumps({"text": text}), encoding="utf-8")
+
+
+class MemoryCache(ResponseCache):
+    """In-process cache for the offline scripted agent: nothing is written to disk."""
+
+    def __init__(self):
+        super().__init__(DEFAULT_DIR)
+        self.store: dict[str, str] = {}
+
+    def get(self, key: str) -> str | None:
+        return self.store.get(key)
+
+    def put(self, key: str, text: str) -> None:
+        self.store[key] = text

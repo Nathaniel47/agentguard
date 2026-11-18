@@ -68,7 +68,7 @@ Public text supplies the attacker's wording only. Each goal, success marker and 
 - InjecAgent: 30 direct-harm and 32 data-stealing instructions, 30 and 32 unique. They name other apps (smart locks, banking), which this agent does not have, so we reuse the wording and add an explicit instruction for our own tools.
 - Success markers are exact strings or state changes, so a model that paraphrases an attack goal without doing it is scored as a failed attack (no false positives, some false negatives).
 - Self-written cases are templated (framing x action), so they are less varied than human-written attacks; the report notes this as a limitation.
-- Sandbox cases need the real sandbox (Step 4) to confirm each marker can fire.
+- Sandbox cases: every marker was confirmed to fire against the naive runner and to be stopped by the strict one (tests/test_sandbox_cases.py). Three POSIX-only cases (/etc/passwd, env, /proc) cannot fire on Windows and are checked in the Linux CI.
 
 ## Sample records
 

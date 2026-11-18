@@ -3,3 +3,5 @@ uvicorn>=0.29
 pydantic>=2.6
 httpx>=0.27
 groq>=0.9
+google-genai>=1.0
+psutil>=5.9
