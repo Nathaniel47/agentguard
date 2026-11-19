@@ -59,7 +59,7 @@ What the numbers say, and what they do not:
 
 - Each guardrail covers a different route. G1 stops most direct injections and jailbreaks but nothing that arrives through a tool result. G2 stops most indirect and tool-abuse attacks, and G3 most indirect ones. G4 stops all memory poisoning. G5 only redacts the final answer.
 - Tool policy (least privilege) was the strongest single guardrail, and a phrase blocklist did nothing.
-- Across three seeds at temperature 0.7, "no guardrails" scored 38%, 48% and 38% (std dev 5.5 points) and "all five" scored 0% each time (one of those runs is 19 of 21 cases; see limitations).
+- Across three seeds at temperature 0.7, "no guardrails" scored 38%, 48% and 38% (std dev 5.5 points) and "all five" scored 0% each time.
 - The real-model sample is small (21 attacks per configuration), the benign tasks are easy, and the guardrails were written with the case styles in view. Read [results/limitations.md](results/limitations.md) before quoting any number.
 
 ## Run locally
@@ -134,7 +134,6 @@ The records behind the table are in `results/runs/`; seeds, temperature and mode
 - One model on a free tier, a small real-model sample (wide intervals), and a variance estimate for only two configurations.
 - The guardrails are rule lists written with the case styles in view, and every attack is a fixed string. There is no adaptive attacker.
 - The benign tasks are simple single-step lookups, so false-block rates are understated.
-- Seed 3 of the variance run has 19 of 21 "all five" cases because the free daily token allowance ran out; the README command completes it.
 
 Details and what would fix each: [results/limitations.md](results/limitations.md).
 
