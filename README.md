@@ -4,7 +4,7 @@ A small LLM agent with five tools and long-term memory, wrapped in five separate
 
 **Demo:** https://agentguard-9q9m.onrender.com (free instance: the first visit after a quiet spell takes up to a minute to wake). Try to trick the agent past the guardrails in one click, then read the step-by-step trace of what it did.
 
-<!-- GIF placeholder: record the arena (click an example, open "See what the assistant did"), save as docs/demo.gif, then replace this line with ![Arena demo](docs/demo.gif) -->
+![Arena demo: the same key-theft attack succeeds with no guardrails and is blocked with all five](docs/demo.gif)
 
 ## What it does
 
